@@ -7,7 +7,7 @@ app.use(express.json())
 app.get("/", (req, res) => {
     res
         .status(200)
-        .json({message: "Hello world"})
+        .json({ message: "Hello world" })
 })
 
 app.get("/users", (req, res) => {
@@ -16,8 +16,21 @@ app.get("/users", (req, res) => {
 })
 
 app.post("/users", (req, res) => {
-    console.log(req.body)
-    res.status(200).json({error: "asd"})
+    const { email, name } = req.body
+    try {
+        if (!email || !name)
+            return res
+                .status(400)
+                .json({ error: "Не хватает данных" })
+        const query = db
+            .prepare(`INSERT INTO users (name, email) VALUES (?, ?)`).run(name, email)
+        const newUser = db
+            .prepare("SELECT * FROM users WHERE id = ?").get(query.lastInsertRowid)
+        res.status(200).json(newUser)
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({error: "Что-то пошло не так"})
+    }
 })
 
 app.listen(3000)
